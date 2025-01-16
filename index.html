@@ -47,42 +47,53 @@
         let html5QrCode;
 
         startButton.addEventListener('click', () => {
-            if (html5QrCode) {
-                html5QrCode.clear(); // Clear previous instance
-            }
-            resultElement.textContent = "Scanning for QR code...";
-            video.style.display = "block"; // Show video when scanning starts
+            // Request camera access if not already granted
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    video.style.display = "block"; // Show video when scanning starts
 
-            html5QrCode = new Html5Qrcode("video");
+                    if (html5QrCode) {
+                        html5QrCode.clear(); // Clear any previous instance
+                    }
+                    
+                    resultElement.textContent = "Scanning for QR code...";
 
-            html5QrCode.start(
-                { facingMode: "environment" }, // Use back camera
-                {
-                    fps: 10, // Scans per second
-                    qrbox: 250 // Box to show scanning area
-                },
-                (decodedText) => {
-                    // Stop scanning once QR code is detected
-                    html5QrCode.stop().then(() => {
-                        video.style.display = "none";
-                        // Check if the scanned code matches any in the nameList
-                        if (decodedText in nameList) {
-                            resultElement.textContent = `Name: ${nameList[decodedText]}`;
-                        } else {
-                            resultElement.textContent = "Name not found.";
+                    html5QrCode = new Html5Qrcode("video");
+
+                    html5QrCode.start(
+                        { facingMode: "environment" }, // Use back camera
+                        {
+                            fps: 10, // Scans per second
+                            qrbox: 250 // Box to show scanning area
+                        },
+                        (decodedText) => {
+                            // Stop scanning once QR code is detected
+                            html5QrCode.stop().then(() => {
+                                video.style.display = "none"; // Hide video
+                                
+                                // Check if the scanned code matches any in the nameList
+                                if (decodedText in nameList) {
+                                    resultElement.textContent = `Name: ${nameList[decodedText]}`;
+                                } else {
+                                    resultElement.textContent = "Name not found.";
+                                }
+                            }).catch(err => {
+                                console.error(err);
+                            });
+                        },
+                        (errorMessage) => {
+                            // Optional: Handle scan failure
+                            console.log(errorMessage);
                         }
-                    }).catch(err => {
-                        console.error(err);
+                    ).catch((err) => {
+                        console.error(`Unable to start scanning, error: ${err}`);
+                        resultElement.textContent = "Failed to start the QR scanner.";
                     });
-                },
-                (errorMessage) => {
-                    // Optional: Handle scan failure
-                    console.log(errorMessage);
-                }
-            ).catch((err) => {
-                console.error(`Unable to start scanning, error: ${err}`);
-                resultElement.textContent = "Failed to start the QR scanner.";
-            });
+                })
+                .catch(function(err) {
+                    console.error(`Camera access denied: ${err}`);
+                    resultElement.textContent = "Camera access was denied. Please allow camera access.";
+                });
         });
     </script>
 </body>
