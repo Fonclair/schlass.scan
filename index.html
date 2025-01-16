@@ -50,13 +50,13 @@
             // Request camera access if not already granted
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(function(stream) {
-                    video.style.display = "block"; // Show video when scanning starts
+                    // Camera access granted, hide the message and show the video feed
+                    resultElement.textContent = "Scanning for QR code...";
+                    video.style.display = "block"; // Show video
 
                     if (html5QrCode) {
                         html5QrCode.clear(); // Clear any previous instance
                     }
-                    
-                    resultElement.textContent = "Scanning for QR code...";
 
                     html5QrCode = new Html5Qrcode("video");
 
@@ -91,6 +91,7 @@
                     });
                 })
                 .catch(function(err) {
+                    // Camera access denied, show the correct message
                     console.error(`Camera access denied: ${err}`);
                     resultElement.textContent = "Camera access was denied. Please allow camera access.";
                 });
