@@ -4,95 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Scanner</title>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            height: 100vh;
-            background-color: #f0f0f0;
-            margin: 0;
+            text-align: center;
+            margin-top: 50px;
         }
-        #scanner {
+        video {
+            display: none;
             width: 100%;
             max-width: 400px;
-            border: 1px solid #ccc;
-            margin-bottom: 20px;
+            margin: 20px auto;
         }
         #result {
-            font-size: 18px;
-            color: #333;
+            font-size: 1.2em;
+            margin-top: 20px;
         }
-        #result.success {
-            color: green;
-        }
-        #result.error {
-            color: red;
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
         }
     </style>
 </head>
 <body>
-
     <h1>QR Code Scanner</h1>
-    <div id="scanner"></div>
-    <div id="result">Scan a QR code to see the result.</div>
+    <button id="startButton">Start Scanning</button>
+    <video id="video" autoplay></video>
+    <p id="result">No QR code scanned yet.</p>
 
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <script>
-        // Sample list of names associated with their QR codes (QR code data as keys, names as values)
         const nameList = {
             "code123": "John Doe",
             "code456": "Jane Smith",
-            "code789": "Alice Johnson",
-            // Add more entries here
+            "code789": "Alice Johnson"
         };
 
-        // Initialize the QR code scanner
-        const html5QrCode = new Html5Qrcode("scanner");
+        const video = document.getElementById('video');
+        const resultElement = document.getElementById('result');
+        const startButton = document.getElementById('startButton');
 
-        // Function to handle QR code scan success
-        function onScanSuccess(decodedText, decodedResult) {
-            // Display the result
-            const resultDiv = document.getElementById("result");
+        let html5QrCode;
 
-            // Check if the scanned code matches any in the name list
-            if (nameList.hasOwnProperty(decodedText)) {
-                resultDiv.innerHTML = `Name found: ${nameList[decodedText]}`;
-                resultDiv.classList.remove('error');
-                resultDiv.classList.add('success');
-            } else {
-                resultDiv.innerHTML = "Name not found for this QR code.";
-                resultDiv.classList.remove('success');
-                resultDiv.classList.add('error');
+        startButton.addEventListener('click', () => {
+            if (html5QrCode) {
+                html5QrCode.clear(); // Clear previous instance
             }
+            resultElement.textContent = "Scanning for QR code...";
+            video.style.display = "block"; // Show video when scanning starts
 
-            // Optionally stop scanning after the first success
-            html5QrCode.stop().catch((err) => {
-                console.error("Failed to stop scanning:", err);
+            html5QrCode = new Html5Qrcode("video");
+
+            html5QrCode.start(
+                { facingMode: "environment" }, // Use back camera
+                {
+                    fps: 10, // Scans per second
+                    qrbox: 250 // Box to show scanning area
+                },
+                (decodedText) => {
+                    // Stop scanning once QR code is detected
+                    html5QrCode.stop().then(() => {
+                        video.style.display = "none";
+                        // Check if the scanned code matches any in the nameList
+                        if (decodedText in nameList) {
+                            resultElement.textContent = `Name: ${nameList[decodedText]}`;
+                        } else {
+                            resultElement.textContent = "Name not found.";
+                        }
+                    }).catch(err => {
+                        console.error(err);
+                    });
+                },
+                (errorMessage) => {
+                    // Optional: Handle scan failure
+                    console.log(errorMessage);
+                }
+            ).catch((err) => {
+                console.error(`Unable to start scanning, error: ${err}`);
+                resultElement.textContent = "Failed to start the QR scanner.";
             });
-        }
-
-        // Function to handle scan failure (optional)
-        function onScanFailure(error) {
-            // Can be ignored or handle errors
-            console.warn(`QR code scanning failed: ${error}`);
-        }
-
-        // Start the scanner
-        html5QrCode.start(
-            { facingMode: "environment" },  // Use rear camera
-            {
-                fps: 10,  // Frames per second
-                qrbox: { width: 250, height: 250 }  // Scanner window
-            },
-            onScanSuccess,
-            onScanFailure
-        ).catch((err) => {
-            console.error("Unable to start scanning:", err);
         });
     </script>
-
 </body>
 </html>
