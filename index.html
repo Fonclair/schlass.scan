@@ -11,18 +11,17 @@
             margin-top: 50px;
         }
         video {
-            display: none;
             width: 100%;
             max-width: 400px;
             margin: 20px auto;
         }
-        #result {
-            font-size: 1.2em;
-            margin-top: 20px;
-        }
         button {
             padding: 10px 20px;
             font-size: 1em;
+        }
+        #result {
+            font-size: 1.2em;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -47,12 +46,10 @@
         let html5QrCode;
 
         startButton.addEventListener('click', () => {
-            // Request camera access if not already granted
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(function(stream) {
-                    // Camera access granted, hide the message and show the video feed
-                    resultElement.textContent = "Scanning for QR code...";
-                    video.style.display = "block"; // Show video
+                    video.srcObject = stream;
+                    video.style.display = "block"; // Show the video stream
 
                     if (html5QrCode) {
                         html5QrCode.clear(); // Clear any previous instance
@@ -67,11 +64,8 @@
                             qrbox: 250 // Box to show scanning area
                         },
                         (decodedText) => {
-                            // Stop scanning once QR code is detected
                             html5QrCode.stop().then(() => {
                                 video.style.display = "none"; // Hide video
-                                
-                                // Check if the scanned code matches any in the nameList
                                 if (decodedText in nameList) {
                                     resultElement.textContent = `Name: ${nameList[decodedText]}`;
                                 } else {
@@ -82,17 +76,13 @@
                             });
                         },
                         (errorMessage) => {
-                            // Optional: Handle scan failure
                             console.log(errorMessage);
                         }
                     ).catch((err) => {
-                        console.error(`Unable to start scanning, error: ${err}`);
                         resultElement.textContent = "Failed to start the QR scanner.";
                     });
                 })
                 .catch(function(err) {
-                    // Camera access denied, show the correct message
-                    console.error(`Camera access denied: ${err}`);
                     resultElement.textContent = "Camera access was denied. Please allow camera access.";
                 });
         });
