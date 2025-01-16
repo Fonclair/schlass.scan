@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        #scanner {
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        #result {
+            font-size: 18px;
+            color: #333;
+        }
+        #result.success {
+            color: green;
+        }
+        #result.error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>QR Code Scanner</h1>
+    <div id="scanner"></div>
+    <div id="result">Scan a QR code to see the result.</div>
+
+    <script>
+        // Sample list of names associated with their QR codes (QR code data as keys, names as values)
+        const nameList = {
+            "code123": "John Doe",
+            "code456": "Jane Smith",
+            "code789": "Alice Johnson",
+            // Add more entries here
+        };
+
+        // Initialize the QR code scanner
+        const html5QrCode = new Html5Qrcode("scanner");
+
+        // Function to handle QR code scan success
+        function onScanSuccess(decodedText, decodedResult) {
+            // Display the result
+            const resultDiv = document.getElementById("result");
+
+            // Check if the scanned code matches any in the name list
+            if (nameList.hasOwnProperty(decodedText)) {
+                resultDiv.innerHTML = `Name found: ${nameList[decodedText]}`;
+                resultDiv.classList.remove('error');
+                resultDiv.classList.add('success');
+            } else {
+                resultDiv.innerHTML = "Name not found for this QR code.";
+                resultDiv.classList.remove('success');
+                resultDiv.classList.add('error');
+            }
+
+            // Optionally stop scanning after the first success
+            html5QrCode.stop().catch((err) => {
+                console.error("Failed to stop scanning:", err);
+            });
+        }
+
+        // Function to handle scan failure (optional)
+        function onScanFailure(error) {
+            // Can be ignored or handle errors
+            console.warn(`QR code scanning failed: ${error}`);
+        }
+
+        // Start the scanner
+        html5QrCode.start(
+            { facingMode: "environment" },  // Use rear camera
+            {
+                fps: 10,  // Frames per second
+                qrbox: { width: 250, height: 250 }  // Scanner window
+            },
+            onScanSuccess,
+            onScanFailure
+        ).catch((err) => {
+            console.error("Unable to start scanning:", err);
+        });
+    </script>
+
+</body>
+</html>
