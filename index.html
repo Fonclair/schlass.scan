@@ -28,7 +28,7 @@
 <body>
     <h1>QR Code Scanner</h1>
     <button id="startButton">Start Scanning</button>
-    <video id="video" autoplay></video>
+    <div style="display:none;" id="reader"></div>
     <p id="result">No QR code scanned yet.</p>
 
     <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
@@ -39,52 +39,40 @@
             "code789": "Alice Johnson"
         };
 
-        const video = document.getElementById('video');
         const resultElement = document.getElementById('result');
         const startButton = document.getElementById('startButton');
 
-        let html5QrCode;
-
         startButton.addEventListener('click', () => {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    video.srcObject = stream;
-                    video.style.display = "block"; // Show the video stream
-
-                    if (html5QrCode) {
-                        html5QrCode.clear(); // Clear any previous instance
-                    }
-
-                    html5QrCode = new Html5Qrcode("video");
-
-                    html5QrCode.start(
-                        { facingMode: "environment" }, // Use back camera
-                        {
-                            fps: 10, // Scans per second
-                            qrbox: 250 // Box to show scanning area
-                        },
-                        (decodedText) => {
-                            html5QrCode.stop().then(() => {
-                                video.style.display = "none"; // Hide video
-                                if (decodedText in nameList) {
-                                    resultElement.textContent = `Name: ${nameList[decodedText]}`;
-                                } else {
-                                    resultElement.textContent = "Name not found.";
-                                }
-                            }).catch(err => {
-                                console.error(err);
-                            });
-                        },
-                        (errorMessage) => {
-                            console.log(errorMessage);
+            // Initialize Html5QrcodeScanner
+            const html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" }, // Use back camera
+                {
+                    fps: 10,    // Scans per second
+                    qrbox: 250  // Define the scanning area
+                },
+                (decodedText) => {
+                    html5QrCode.stop().then(() => {
+                        document.getElementById('reader').style.display = "none"; // Hide video when scanning stops
+                        
+                        if (decodedText in nameList) {
+                            resultElement.textContent = `Name: ${nameList[decodedText]}`;
+                        } else {
+                            resultElement.textContent = "Name not found.";
                         }
-                    ).catch((err) => {
-                        resultElement.textContent = "Failed to start the QR scanner.";
+                    }).catch((err) => {
+                        console.error(err);
                     });
-                })
-                .catch(function(err) {
-                    resultElement.textContent = "Camera access was denied. Please allow camera access.";
-                });
+                },
+                (errorMessage) => {
+                    // Handle scan errors or unsuccessful attempts
+                    console.log(errorMessage);
+                }
+            ).catch((err) => {
+                resultElement.textContent = "Failed to start the QR scanner.";
+                console.error("Failed to start scanning", err);
+            });
         });
     </script>
 </body>
